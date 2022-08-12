@@ -3,11 +3,17 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux/es/exports";
 import {
     fetchUserData,
+    fetchUsernames,
     logoutUser,
     removeFeedbacks,
     updateFeedbacks,
 } from "../firebase-config";
-import { setFeedbacks, setLoggedOut, setUser } from "../slices/userSlice";
+import {
+    setFeedbacks,
+    setLoggedOut,
+    setTaken,
+    setUser,
+} from "../slices/userSlice";
 import { useState } from "react";
 
 export default function Profile() {
@@ -18,7 +24,9 @@ export default function Profile() {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const [review, setReview] = useState("");
-    const exists = Object.keys(takenUsernames).includes(username);
+    const exists = takenUsernames
+        ? Object.keys(takenUsernames).includes(username)
+        : false;
 
     const handleClick = async () => {
         dispatch(setLoggedOut());
@@ -67,6 +75,16 @@ export default function Profile() {
     };
 
     useEffect(() => {
+        fetchUsernames().then((data) => {
+            // console.log(data.forEach((doc) => console.log(`${doc.id} => ${doc.data()}`)));
+            const existing = {};
+            data.forEach((doc) => {
+                const key = doc.id;
+                existing[key] = doc.data();
+            });
+            // console.log(existing);
+            dispatch(setTaken(existing));
+        });
         if (exists) {
             fetchUserData(username).then((data) => {
                 dispatch(
@@ -79,13 +97,17 @@ export default function Profile() {
             });
         }
         // eslint-disable-next-line
-    }, []);
+    }, [takenUsernames]);
 
     return (
         <div className="container-all">
-            {!exists && <div className="container-card">
-                <div className="lost-div" onClick={() => navigate("/")}>No user found. Click here to log in</div>
-                </div>}
+            {!exists && (
+                <div className="container-card">
+                    <div className="lost-div" onClick={() => navigate("/")}>
+                        No user found. Click here to log in
+                    </div>
+                </div>
+            )}
             {exists && !loggedIn && (
                 <div className="container-card">
                     <img

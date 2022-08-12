@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { createUser, saveNewUser } from "../firebase-config";
-import { setLoggedIn, setUser } from "../slices/userSlice";
+import { setLoggedIn, setTaken, setUser } from "../slices/userSlice";
 
 export default function Signup() {
     const { takenUsernames } = useSelector(state => state.user);
@@ -28,9 +28,12 @@ export default function Signup() {
         const response = await createUser(email, password);
         const saving = await saveNewUser(username, email);
         if (response !== null && saving !== null) {
+            let newObj = JSON.parse(JSON.stringify(takenUsernames));
+            newObj[username] = { username: username, email: email, feedbacks: [] };
+            dispatch(setTaken(newObj));
             dispatch(setUser({ username: username, email: email, feedbacks: [] }));
             dispatch(setLoggedIn());
-            navigate(`/users/${username}`)
+            navigate(`/users/${username}`);
         };
     }
 
